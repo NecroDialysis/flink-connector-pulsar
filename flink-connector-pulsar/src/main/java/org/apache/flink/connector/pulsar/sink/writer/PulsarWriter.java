@@ -22,8 +22,8 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.operators.MailboxExecutor;
 import org.apache.flink.api.common.operators.ProcessingTimeService;
 import org.apache.flink.api.common.serialization.SerializationSchema.InitializationContext;
-import org.apache.flink.api.connector.sink2.Sink.InitContext;
-import org.apache.flink.api.connector.sink2.TwoPhaseCommittingSink.PrecommittingSinkWriter;
+import org.apache.flink.api.connector.sink2.CommittingSinkWriter;
+import org.apache.flink.api.connector.sink2.WriterInitContext;
 import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.pulsar.common.crypto.PulsarCrypto;
 import org.apache.flink.connector.pulsar.sink.committer.PulsarCommittable;
@@ -67,7 +67,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * @param <IN> The type of the input elements.
  */
 @Internal
-public class PulsarWriter<IN> implements PrecommittingSinkWriter<IN, PulsarCommittable> {
+public class PulsarWriter<IN> implements CommittingSinkWriter<IN, PulsarCommittable> {
     private static final Logger LOG = LoggerFactory.getLogger(PulsarWriter.class);
 
     private final PulsarSerializationSchema<IN> serializationSchema;
@@ -92,7 +92,7 @@ public class PulsarWriter<IN> implements PrecommittingSinkWriter<IN, PulsarCommi
      * @param metadataListener The listener for querying topic metadata.
      * @param topicRouter Topic router to choose the topic by incoming records.
      * @param pulsarCrypto Used for end-to-end encryption.
-     * @param initContext Context to provide information about the runtime environment.
+     * @param writerInitContext Context to provide information about the runtime environment.
      */
     public PulsarWriter(
             SinkConfiguration sinkConfiguration,
@@ -101,22 +101,22 @@ public class PulsarWriter<IN> implements PrecommittingSinkWriter<IN, PulsarCommi
             TopicRouter<IN> topicRouter,
             MessageDelayer<IN> messageDelayer,
             PulsarCrypto pulsarCrypto,
-            InitContext initContext)
+            WriterInitContext writerInitContext)
             throws PulsarClientException {
         checkNotNull(sinkConfiguration);
         this.serializationSchema = checkNotNull(serializationSchema);
         this.metadataListener = checkNotNull(metadataListener);
         this.topicRouter = checkNotNull(topicRouter);
         this.messageDelayer = checkNotNull(messageDelayer);
-        checkNotNull(initContext);
+        checkNotNull(writerInitContext);
 
         this.deliveryGuarantee = sinkConfiguration.getDeliveryGuarantee();
         this.sinkContext =
-                new PulsarSinkContextImpl(initContext, sinkConfiguration, metadataListener);
+                new PulsarSinkContextImpl(writerInitContext, sinkConfiguration, metadataListener);
 
         // Initialize topic metadata listener.
         LOG.debug("Initialize topic metadata after creating Pulsar writer.");
-        ProcessingTimeService timeService = initContext.getProcessingTimeService();
+        ProcessingTimeService timeService = writerInitContext.getProcessingTimeService();
         this.metadataListener.open(sinkConfiguration, timeService);
 
         // Initialize topic router.
@@ -125,16 +125,16 @@ public class PulsarWriter<IN> implements PrecommittingSinkWriter<IN, PulsarCommi
         // Initialize the serialization schema.
         try {
             InitializationContext initializationContext =
-                    initContext.asSerializationSchemaInitializationContext();
+                    writerInitContext.asSerializationSchemaInitializationContext();
             this.serializationSchema.open(initializationContext, sinkContext, sinkConfiguration);
         } catch (Exception e) {
             throw new FlinkRuntimeException("Cannot initialize schema.", e);
         }
 
         // Create this producer register after opening serialization schema!
-        SinkWriterMetricGroup metricGroup = initContext.metricGroup();
+        SinkWriterMetricGroup metricGroup = writerInitContext.metricGroup();
         this.producerRegister = new ProducerRegister(sinkConfiguration, pulsarCrypto, metricGroup);
-        this.mailboxExecutor = initContext.getMailboxExecutor();
+        this.mailboxExecutor = writerInitContext.getMailboxExecutor();
         this.pendingMessages = new AtomicLong(0);
     }
 

@@ -19,12 +19,14 @@
 package org.apache.flink.connector.pulsar.sink.writer;
 
 import org.apache.flink.api.common.JobID;
+import org.apache.flink.api.common.JobInfo;
+import org.apache.flink.api.common.TaskInfo;
 import org.apache.flink.api.common.operators.MailboxExecutor;
 import org.apache.flink.api.common.operators.ProcessingTimeService;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
-import org.apache.flink.api.connector.sink2.Sink.InitContext;
 import org.apache.flink.api.connector.sink2.SinkWriter;
+import org.apache.flink.api.connector.sink2.WriterInitContext;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.pulsar.common.crypto.PulsarCrypto;
@@ -45,7 +47,7 @@ import org.apache.flink.metrics.groups.OperatorIOMetricGroup;
 import org.apache.flink.metrics.groups.SinkWriterMetricGroup;
 import org.apache.flink.metrics.testutils.MetricListener;
 import org.apache.flink.runtime.mailbox.SyncMailboxExecutor;
-import org.apache.flink.runtime.metrics.groups.InternalSinkWriterMetricGroup;
+import org.apache.flink.runtime.metrics.groups.MetricsGroupTestUtils;
 import org.apache.flink.runtime.metrics.groups.UnregisteredMetricGroups;
 import org.apache.flink.streaming.runtime.tasks.TestProcessingTimeService;
 import org.apache.flink.util.UserCodeClassLoader;
@@ -160,7 +162,7 @@ class PulsarWriterTest extends PulsarTestSuiteBase {
         }
     }
 
-    private static class MockInitContext implements InitContext {
+    private static class MockInitContext implements WriterInitContext {
 
         private final MetricListener metricListener;
         private final OperatorIOMetricGroup ioMetricGroup;
@@ -173,7 +175,8 @@ class PulsarWriterTest extends PulsarTestSuiteBase {
                     UnregisteredMetricGroups.createUnregisteredOperatorMetricGroup()
                             .getIOMetricGroup();
             MetricGroup metricGroup = metricListener.getMetricGroup();
-            this.metricGroup = InternalSinkWriterMetricGroup.mock(metricGroup, ioMetricGroup);
+            this.metricGroup =
+                    MetricsGroupTestUtils.mockWriterMetricGroup(metricGroup, ioMetricGroup);
             this.timeService = new TestProcessingTimeService();
         }
 
@@ -192,21 +195,6 @@ class PulsarWriterTest extends PulsarTestSuiteBase {
             return timeService;
         }
 
-        @Override
-        public int getSubtaskId() {
-            return 0;
-        }
-
-        @Override
-        public int getNumberOfParallelSubtasks() {
-            return 1;
-        }
-
-        @Override
-        public int getAttemptNumber() {
-            return 0;
-        }
-
         // The following three methods are for compatibility with
         // https://github.com/apache/flink/commit/4f5b2fb5736f5a1c098a7dc1d448a879f36f801b
         // . Removed the commented out `@Override` when we move to 1.18.
@@ -221,11 +209,6 @@ class PulsarWriterTest extends PulsarTestSuiteBase {
             return null;
         }
 
-        // @Override
-        public JobID getJobId() {
-            return null;
-        }
-
         @Override
         public SinkWriterMetricGroup metricGroup() {
             return metricGroup;
@@ -234,6 +217,61 @@ class PulsarWriterTest extends PulsarTestSuiteBase {
         @Override
         public OptionalLong getRestoredCheckpointId() {
             return OptionalLong.empty();
+        }
+
+        @Override
+        public JobInfo getJobInfo() {
+            return new JobInfo() {
+                @Override
+                public JobID getJobId() {
+                    return null;
+                }
+
+                @Override
+                public String getJobName() {
+                    return null;
+                }
+            };
+        }
+
+        @Override
+        public TaskInfo getTaskInfo() {
+            return new TaskInfo() {
+                @Override
+                public String getTaskName() {
+                    return null;
+                }
+
+                @Override
+                public int getMaxNumberOfParallelSubtasks() {
+                    return 1;
+                }
+
+                @Override
+                public int getIndexOfThisSubtask() {
+                    return 0;
+                }
+
+                @Override
+                public int getNumberOfParallelSubtasks() {
+                    return 1;
+                }
+
+                @Override
+                public int getAttemptNumber() {
+                    return 0;
+                }
+
+                @Override
+                public String getTaskNameWithSubtasks() {
+                    return null;
+                }
+
+                @Override
+                public String getAllocationIDAsString() {
+                    return null;
+                }
+            };
         }
 
         @Override
