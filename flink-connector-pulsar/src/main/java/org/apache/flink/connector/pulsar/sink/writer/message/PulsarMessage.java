@@ -39,7 +39,6 @@ public class PulsarMessage<T> {
 
     @Nullable private final byte[] orderingKey;
     @Nullable private final String key;
-    private final boolean isBase64EncodedKey;
     private final long eventTime;
     @Nullable private final Schema<T> schema;
     @Nullable private final T value;
@@ -58,7 +57,6 @@ public class PulsarMessage<T> {
     PulsarMessage(
             @Nullable byte[] orderingKey,
             @Nullable String key,
-            boolean isBase64EncodedKey,
             long eventTime,
             @Nullable Schema<T> schema,
             @Nullable T value,
@@ -68,7 +66,6 @@ public class PulsarMessage<T> {
             boolean disableReplication) {
         this.orderingKey = orderingKey;
         this.key = key;
-        this.isBase64EncodedKey = isBase64EncodedKey;
         this.eventTime = eventTime;
         this.schema = schema;
         this.value = value;
@@ -118,10 +115,6 @@ public class PulsarMessage<T> {
     @Nullable
     public String getKey() {
         return key;
-    }
-
-    public boolean isBase64EncodedKey() {
-        return isBase64EncodedKey;
     }
 
     public long getEventTime() {

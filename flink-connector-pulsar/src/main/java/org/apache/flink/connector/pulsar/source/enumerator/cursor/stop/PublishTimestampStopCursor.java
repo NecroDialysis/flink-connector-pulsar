@@ -22,8 +22,6 @@ import org.apache.flink.connector.pulsar.source.enumerator.cursor.StopCursor;
 
 import org.apache.pulsar.client.api.Message;
 
-import java.util.Objects;
-
 /** Stop consuming message at the given publish time. */
 public class PublishTimestampStopCursor implements StopCursor {
     private static final long serialVersionUID = 4386276745339324527L;
@@ -40,22 +38,5 @@ public class PublishTimestampStopCursor implements StopCursor {
     public StopCondition shouldStop(Message<?> message) {
         long publishTime = message.getPublishTime();
         return StopCondition.compare(timestamp, publishTime, inclusive);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        PublishTimestampStopCursor that = (PublishTimestampStopCursor) o;
-        return timestamp == that.timestamp && inclusive == that.inclusive;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(timestamp, inclusive);
     }
 }

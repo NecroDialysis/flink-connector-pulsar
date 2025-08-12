@@ -29,8 +29,6 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.schema.GenericRecord;
 import org.apache.pulsar.client.impl.schema.AutoConsumeSchema;
 
-import java.util.Objects;
-
 /**
  * A stop cursor that initialize the position to the latest message id. The offsets initialization
  * are taken care of by the {@code PulsarPartitionSplitReaderBase} instead of by the {@code
@@ -72,22 +70,5 @@ public class LatestMessageStopCursor implements StopCursor {
                 }
             }
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        LatestMessageStopCursor that = (LatestMessageStopCursor) o;
-        return inclusive == that.inclusive && Objects.equals(messageId, that.messageId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(messageId, inclusive);
     }
 }

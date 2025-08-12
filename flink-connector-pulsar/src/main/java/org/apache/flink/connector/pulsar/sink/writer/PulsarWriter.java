@@ -44,7 +44,6 @@ import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.TypedMessageBuilder;
-import org.apache.pulsar.client.impl.TypedMessageBuilderImpl;
 import org.apache.pulsar.shade.com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -198,14 +197,6 @@ public class PulsarWriter<IN> implements CommittingSinkWriter<IN, PulsarCommitta
         String key = message.getKey();
         if (!Strings.isNullOrEmpty(key)) {
             builder.key(key);
-        }
-
-        if (message.isBase64EncodedKey()) {
-            // HACK - otherwise we should hold both keys and keyBytes fields which
-            // is more confusing.
-            ((TypedMessageBuilderImpl<?>) builder)
-                    .getMetadataBuilder()
-                    .setPartitionKeyB64Encoded(true);
         }
 
         long eventTime = message.getEventTime();
