@@ -23,11 +23,11 @@ under the License.
 
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>io.streamnative.connectors</groupId>
-    <artifactId>flink-connector-pulsar-parent</artifactId>
-    <version>4.2.2-SNAPSHOT</version>
-  </parent>
+	<parent>
+        <groupId>com.xenoamess.necrodialysis.flink-connector-pulsar</groupId>
+		<artifactId>flink-connector-pulsar-parent</artifactId>
+		<version>4.2.2-SNAPSHOT</version>
+	</parent>
 
   <artifactId>flink-sql-connector-pulsar</artifactId>
   <name>Flink : Connectors : Pulsar : SQL</name>
@@ -39,23 +39,23 @@ under the License.
     <japicmp.skip>true</japicmp.skip>
   </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>io.streamnative.connectors</groupId>
-      <artifactId>flink-connector-pulsar</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-base</artifactId>
-      <version>${flink.version}</version>
-      <scope>provided</scope>
-    </dependency>
-  </dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>flink-connector-pulsar</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-connector-base</artifactId>
+			<version>${flink.version}</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
 
   <build>
     <plugins>

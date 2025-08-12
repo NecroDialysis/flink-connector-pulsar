@@ -29,7 +29,7 @@ under the License.
         <version>1.0.0</version>
     </parent>
 
-    <groupId>io.streamnative.connectors</groupId>
+    <groupId>com.xenoamess.necrodialysis.flink-connector-pulsar</groupId>
     <artifactId>flink-connector-pulsar-parent</artifactId>
     <version>4.2.2-SNAPSHOT</version>
     <name>Flink : Connectors : Pulsar : Parent</name>

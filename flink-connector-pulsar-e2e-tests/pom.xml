@@ -21,7 +21,7 @@ under the License.
 		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<parent>
-		<groupId>io.streamnative.connectors</groupId>
+        <groupId>com.xenoamess.necrodialysis.flink-connector-pulsar</groupId>
 		<artifactId>flink-connector-pulsar-parent</artifactId>
 		<version>4.2.2-SNAPSHOT</version>
 	</parent>
@@ -37,12 +37,12 @@ under the License.
 
 	<dependencies>
 		<dependency>
-			<groupId>io.streamnative.connectors</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>flink-sql-connector-pulsar</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>io.streamnative.connectors</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>flink-connector-pulsar</artifactId>
 			<version>${project.version}</version>
 			<type>test-jar</type>
@@ -132,7 +132,7 @@ under the License.
 				<configuration>
 					<artifactItems>
 						<artifactItem>
-							<groupId>io.streamnative.connectors</groupId>
+                            <groupId>${project.groupId}</groupId>
 							<artifactId>flink-sql-connector-pulsar</artifactId>
 							<version>${project.version}</version>
 							<destFileName>pulsar-connector.jar</destFileName>
