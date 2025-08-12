@@ -19,14 +19,13 @@
 package org.apache.flink.tests.util.pulsar.common;
 
 import org.apache.flink.connector.pulsar.testutils.PulsarTestEnvironment;
-import org.apache.flink.connector.testframe.container.FlinkContainerTestEnvironment;
 
 import static org.apache.flink.connector.pulsar.testutils.runtime.PulsarRuntime.container;
 
 /** This test environment is used for create a Pulsar standalone instance for e2e tests. */
 public class PulsarContainerTestEnvironment extends PulsarTestEnvironment {
 
-    public PulsarContainerTestEnvironment(FlinkContainerTestEnvironment flinkEnvironment) {
+    public PulsarContainerTestEnvironment(FlinkContainerWithPulsarEnvironment flinkEnvironment) {
         super(container(flinkEnvironment.getFlinkContainers().getJobManager()));
     }
 }
