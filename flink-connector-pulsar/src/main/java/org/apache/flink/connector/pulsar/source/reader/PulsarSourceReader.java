@@ -39,6 +39,7 @@ import org.apache.flink.connector.pulsar.source.split.PulsarPartitionSplitState;
 import org.apache.flink.core.io.InputStatus;
 import org.apache.flink.util.FlinkRuntimeException;
 
+import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -61,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import static org.apache.flink.connector.pulsar.common.config.PulsarClientFactory.createAdmin;
 import static org.apache.flink.connector.pulsar.common.config.PulsarClientFactory.createClient;
 
 /**
@@ -77,6 +79,7 @@ public class PulsarSourceReader<OUT>
 
     private final SourceConfiguration sourceConfiguration;
     private final PulsarClient pulsarClient;
+    private final PulsarAdmin pulsarAdmin;
     @VisibleForTesting final SortedMap<Long, Map<TopicPartition, MessageId>> cursorsToCommit;
     private final ConcurrentMap<TopicPartition, MessageId> cursorsOfFinishedSplits;
     private final AtomicReference<Throwable> cursorCommitThrowable;
@@ -89,6 +92,7 @@ public class PulsarSourceReader<OUT>
             PulsarDeserializationSchema<OUT> deserializationSchema,
             SourceConfiguration sourceConfiguration,
             PulsarClient pulsarClient,
+            PulsarAdmin pulsarAdmin,
             SourceReaderContext context) {
         super(
                 elementsQueue,
@@ -99,6 +103,7 @@ public class PulsarSourceReader<OUT>
 
         this.sourceConfiguration = sourceConfiguration;
         this.pulsarClient = pulsarClient;
+        this.pulsarAdmin = pulsarAdmin;
 
         this.cursorsToCommit = Collections.synchronizedSortedMap(new TreeMap<>());
         this.cursorsOfFinishedSplits = new ConcurrentHashMap<>();
@@ -216,6 +221,7 @@ public class PulsarSourceReader<OUT>
 
         // Close shared pulsar resources.
         pulsarClient.shutdown();
+        pulsarAdmin.close();
     }
 
     // ----------------- helper methods --------------
@@ -258,6 +264,7 @@ public class PulsarSourceReader<OUT>
                 new FutureCompletingBlockingQueue<>(queueCapacity);
 
         PulsarClient pulsarClient = createClient(sourceConfiguration);
+        PulsarAdmin pulsarAdmin = createAdmin(sourceConfiguration);
 
         // Initialize the deserialization schema before creating the pulsar reader.
         PulsarDeserializationSchemaInitializationContext initializationContext =
@@ -280,6 +287,7 @@ public class PulsarSourceReader<OUT>
                 () ->
                         new PulsarPartitionSplitReader(
                                 pulsarClient,
+                                pulsarAdmin,
                                 sourceConfiguration,
                                 schema,
                                 pulsarCrypto,
@@ -295,6 +303,7 @@ public class PulsarSourceReader<OUT>
                 deserializationSchema,
                 sourceConfiguration,
                 pulsarClient,
+                pulsarAdmin,
                 readerContext);
     }
 }

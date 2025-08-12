@@ -56,6 +56,7 @@ class StopCursorTest extends PulsarTestSuiteBase {
         PulsarPartitionSplitReader splitReader =
                 new PulsarPartitionSplitReader(
                         operator().client(),
+                        operator().admin(),
                         sourceConfig(),
                         Schema.BYTES,
                         PulsarCrypto.disabled(),

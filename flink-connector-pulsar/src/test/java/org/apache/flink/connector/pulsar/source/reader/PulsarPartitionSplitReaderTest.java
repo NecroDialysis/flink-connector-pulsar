@@ -300,6 +300,7 @@ class PulsarPartitionSplitReaderTest extends PulsarTestSuiteBase {
     private PulsarPartitionSplitReader splitReader() {
         return new PulsarPartitionSplitReader(
                 operator().client(),
+                operator().admin(),
                 sourceConfig(),
                 new BytesSchema(new PulsarSchema<>(STRING)),
                 PulsarCrypto.disabled(),

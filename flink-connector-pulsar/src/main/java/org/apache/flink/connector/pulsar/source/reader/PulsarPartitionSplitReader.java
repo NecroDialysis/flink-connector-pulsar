@@ -38,6 +38,8 @@ import org.apache.flink.metrics.groups.SourceReaderMetricGroup;
 import org.apache.flink.util.FlinkRuntimeException;
 import org.apache.flink.util.Preconditions;
 
+import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
 import org.apache.pulsar.client.api.ConsumerStats;
@@ -93,6 +95,7 @@ public class PulsarPartitionSplitReader
     private static final Logger LOG = LoggerFactory.getLogger(PulsarPartitionSplitReader.class);
 
     private final PulsarClient pulsarClient;
+    private final PulsarAdmin pulsarAdmin;
     private final SourceConfiguration sourceConfiguration;
     private final Schema<byte[]> schema;
     private final PulsarCrypto pulsarCrypto;
@@ -103,11 +106,13 @@ public class PulsarPartitionSplitReader
 
     public PulsarPartitionSplitReader(
             PulsarClient pulsarClient,
+            PulsarAdmin pulsarAdmin,
             SourceConfiguration sourceConfiguration,
             Schema<byte[]> schema,
             PulsarCrypto pulsarCrypto,
             SourceReaderMetricGroup metricGroup) {
         this.pulsarClient = pulsarClient;
+        this.pulsarAdmin = pulsarAdmin;
         this.sourceConfiguration = sourceConfiguration;
         this.schema = schema;
         this.pulsarCrypto = pulsarCrypto;
@@ -188,7 +193,7 @@ public class PulsarPartitionSplitReader
 
         // Open stop cursor.
         try {
-            registeredSplit.open(pulsarClient);
+            registeredSplit.open(pulsarAdmin);
         } catch (Exception e) {
             throw new FlinkRuntimeException(e);
         }
@@ -218,8 +223,11 @@ public class PulsarPartitionSplitReader
                 String topicName = registeredSplit.getPartition().getFullTopicName();
                 String subscriptionName = sourceConfiguration.getSubscriptionName();
 
-                cursorPosition.setupSubPosition(pulsarClient, topicName, subscriptionName);
-            } catch (PulsarClientException e) {
+                // Remove Consumer.seek() here for waiting for pulsar-client-all 2.12.0
+                // See https://github.com/apache/pulsar/issues/16757 for more details.
+
+                cursorPosition.seekPosition(pulsarAdmin, topicName, subscriptionName);
+            } catch (PulsarAdminException e) {
                 if (sourceConfiguration.getVerifyInitialOffsets() == FAIL_ON_MISMATCH) {
                     throw new IllegalArgumentException(e);
                 } else {

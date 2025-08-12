@@ -25,10 +25,13 @@ import org.apache.flink.connector.pulsar.sink.PulsarSinkOptions;
 import org.apache.flink.connector.pulsar.sink.config.SinkConfiguration;
 import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicMetadata;
 import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicPartition;
+import org.apache.flink.util.ExceptionUtils;
 import org.apache.flink.util.FlinkRuntimeException;
 
+import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.PulsarAdminException;
+import org.apache.pulsar.client.admin.PulsarAdminException.NotFoundException;
 import org.apache.pulsar.client.api.PulsarClientException;
-import org.apache.pulsar.client.impl.PulsarClientImpl;
 import org.apache.pulsar.common.naming.TopicName;
 import org.apache.pulsar.common.partition.PartitionedTopicMetadata;
 import org.apache.pulsar.shade.com.google.common.cache.CacheBuilder;
@@ -49,7 +52,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.emptyList;
-import static org.apache.flink.connector.pulsar.common.config.PulsarClientFactory.createClient;
+import static org.apache.flink.connector.pulsar.common.config.PulsarClientFactory.createAdmin;
 import static org.apache.flink.connector.pulsar.source.enumerator.topic.TopicNameUtils.isPartition;
 import static org.apache.pulsar.common.partition.PartitionedTopicMetadata.NON_PARTITIONED;
 
@@ -69,7 +72,7 @@ public class MetadataListener implements Serializable, Closeable {
     private ImmutableList<TopicPartition> availablePartitions;
 
     // Dynamic fields.
-    private transient PulsarClientImpl clientImpl;
+    private transient PulsarAdmin pulsarAdmin;
     private transient Long topicMetadataRefreshInterval;
     private transient ProcessingTimeService timeService;
     private transient LoadingCache<String, Optional<Integer>> topicPartitionCache;
@@ -99,7 +102,7 @@ public class MetadataListener implements Serializable, Closeable {
     public void open(SinkConfiguration sinkConfiguration, ProcessingTimeService timeService)
             throws PulsarClientException {
         // Initialize listener properties.
-        this.clientImpl = (PulsarClientImpl) createClient(sinkConfiguration);
+        this.pulsarAdmin = createAdmin(sinkConfiguration);
         this.topicMetadataRefreshInterval = sinkConfiguration.getTopicMetadataRefreshInterval();
         this.timeService = timeService;
         this.topicPartitionCache =
@@ -110,15 +113,25 @@ public class MetadataListener implements Serializable, Closeable {
                                     @Override
                                     @ParametersAreNonnullByDefault
                                     public Optional<Integer> load(String topic)
-                                            throws ExecutionException, InterruptedException {
-                                        PartitionedTopicMetadata metadata =
-                                                clientImpl.getPartitionedTopicMetadata(topic).get();
-                                        return Optional.of(metadata.partitions);
+                                            throws PulsarAdminException {
+                                        try {
+                                            PartitionedTopicMetadata metadata =
+                                                    pulsarAdmin
+                                                            .topics()
+                                                            .getPartitionedTopicMetadata(topic);
+                                            return Optional.of(metadata.partitions);
+                                        } catch (NotFoundException e) {
+                                            return Optional.empty();
+                                        }
                                     }
                                 });
 
         // Initialize the topic metadata. Quit if fail to connect to Pulsar.
-        updateTopicMetadata();
+        try {
+            updateTopicMetadata();
+        } catch (PulsarAdminException e) {
+            throw new FlinkRuntimeException(e);
+        }
 
         // Register time service for update the topic metadata.
         if (topics.isEmpty()) {
@@ -143,7 +156,7 @@ public class MetadataListener implements Serializable, Closeable {
      *
      * @return Return {@link Optional#empty()} if the topic doesn't exist.
      */
-    public Optional<TopicMetadata> queryTopicMetadata(String topic) {
+    public Optional<TopicMetadata> queryTopicMetadata(String topic) throws PulsarAdminException {
         if (isPartition(topic)) {
             return Optional.of(new TopicMetadata(topic, NON_PARTITIONED));
         }
@@ -151,7 +164,13 @@ public class MetadataListener implements Serializable, Closeable {
         try {
             return topicPartitionCache.get(topic).map(size -> new TopicMetadata(topic, size));
         } catch (ExecutionException e) {
-            throw new FlinkRuntimeException(e);
+            Optional<PulsarAdminException> optional =
+                    ExceptionUtils.findThrowable(e, PulsarAdminException.class);
+            if (optional.isPresent()) {
+                throw optional.get();
+            } else {
+                throw new FlinkRuntimeException(e);
+            }
         }
     }
 
@@ -162,8 +181,8 @@ public class MetadataListener implements Serializable, Closeable {
 
     @Override
     public void close() throws IOException {
-        if (clientImpl != null) {
-            clientImpl.close();
+        if (pulsarAdmin != null) {
+            pulsarAdmin.close();
         }
     }
 
@@ -175,10 +194,10 @@ public class MetadataListener implements Serializable, Closeable {
     }
 
     private void triggerNextTopicMetadataUpdate() {
-        // Try to update the topic metadata.
+        // Try to update the topic metadata, ignore the pulsar admin exception.
         try {
             updateTopicMetadata();
-        } catch (FlinkRuntimeException e) {
+        } catch (PulsarAdminException e) {
             LOG.warn("", e);
         }
 
@@ -186,7 +205,7 @@ public class MetadataListener implements Serializable, Closeable {
         registerNextTopicMetadataUpdateTimer();
     }
 
-    private void updateTopicMetadata() throws FlinkRuntimeException {
+    private void updateTopicMetadata() throws PulsarAdminException {
         ImmutableList.Builder<TopicPartition> parititonsBuilder = ImmutableList.builder();
 
         for (String topic : topics) {
