@@ -28,6 +28,7 @@ import java.util.Objects;
 import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.pulsar.client.api.MessageId.earliest;
 import static org.apache.pulsar.client.api.MessageId.latest;
+import static org.apache.pulsar.client.impl.MessageIdImpl.convertToMessageIdImpl;
 
 /**
  * Stop consuming message at a given message id. We use the {@link MessageId#compareTo(Object)} for
@@ -44,8 +45,8 @@ public class MessageIdStopCursor implements StopCursor {
         checkArgument(!earliest.equals(messageId), "MessageId.earliest is not supported.");
         checkArgument(!latest.equals(messageId), "Use LatestMessageStopCursor instead.");
 
+        this.messageId = convertToMessageIdImpl(messageId);
         this.inclusive = inclusive;
-        this.messageId = messageId;
     }
 
     @Override

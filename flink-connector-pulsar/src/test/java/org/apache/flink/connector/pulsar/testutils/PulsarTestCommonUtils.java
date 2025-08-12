@@ -25,12 +25,9 @@ import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicPartition;
 import org.apache.flink.connector.pulsar.source.split.PulsarPartitionSplit;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.test.resources.ResourceTestUtils;
-import org.apache.flink.util.FlinkRuntimeException;
 
 import org.apache.pulsar.client.api.MessageId;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,12 +46,8 @@ public class PulsarTestCommonUtils {
         }
     }
 
-    public static URL resourcePath(String jarName) {
-        try {
-            return ResourceTestUtils.getResource(jarName).toAbsolutePath().toUri().toURL();
-        } catch (MalformedURLException e) {
-            throw new FlinkRuntimeException("Couldn't find jar: " + jarName);
-        }
+    public static String resourcePath(String jarName) {
+        return ResourceTestUtils.getResource(jarName).toAbsolutePath().toString();
     }
 
     /** creates a fullRange() partitionSplit. */

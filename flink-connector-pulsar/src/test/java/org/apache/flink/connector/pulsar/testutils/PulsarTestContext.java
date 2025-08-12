@@ -24,7 +24,7 @@ import org.apache.flink.connector.testframe.external.ExternalContext;
 import org.apache.pulsar.client.api.Schema;
 
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -36,8 +36,6 @@ public abstract class PulsarTestContext<T> implements ExternalContext {
     protected final PulsarRuntimeOperator operator;
     // The schema used for consuming and producing messages between Pulsar and tests.
     protected final Schema<T> schema;
-
-    private final List<URL> connectorJarPaths = new ArrayList<>();
 
     protected PulsarTestContext(PulsarTestEnvironment environment, Schema<T> schema) {
         this.operator = environment.operator();
@@ -54,11 +52,9 @@ public abstract class PulsarTestContext<T> implements ExternalContext {
 
     @Override
     public List<URL> getConnectorJarPaths() {
-        return connectorJarPaths;
-    }
-
-    public void addConnectorJarPaths(List<URL> urls) {
-        this.connectorJarPaths.addAll(urls);
+        // We don't need any test jars' definition.
+        // They are provided in docker-related environments.
+        return Collections.emptyList();
     }
 
     /**
