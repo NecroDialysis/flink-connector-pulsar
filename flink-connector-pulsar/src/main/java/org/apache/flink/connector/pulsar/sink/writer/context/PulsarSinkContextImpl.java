@@ -25,6 +25,8 @@ import org.apache.flink.connector.pulsar.sink.config.SinkConfiguration;
 import org.apache.flink.connector.pulsar.sink.writer.topic.MetadataListener;
 import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicMetadata;
 
+import org.apache.pulsar.client.admin.PulsarAdminException;
+
 import java.util.Optional;
 
 /** An implementation that would contain all the required context. */
@@ -69,7 +71,7 @@ public class PulsarSinkContextImpl implements PulsarSinkContext {
     }
 
     @Override
-    public Optional<TopicMetadata> topicMetadata(String topic) {
+    public Optional<TopicMetadata> topicMetadata(String topic) throws PulsarAdminException {
         return metadataListener.queryTopicMetadata(topic);
     }
 }

@@ -33,6 +33,8 @@ import org.apache.flink.connector.pulsar.source.split.PulsarPartitionSplit;
 import org.apache.flink.metrics.groups.SplitEnumeratorMetricGroup;
 import org.apache.flink.util.FlinkRuntimeException;
 
+import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.slf4j.Logger;
@@ -45,6 +47,7 @@ import java.util.List;
 import java.util.Set;
 
 import static java.util.Collections.singletonList;
+import static org.apache.flink.connector.pulsar.common.config.PulsarClientFactory.createAdmin;
 import static org.apache.flink.connector.pulsar.common.config.PulsarClientFactory.createClient;
 import static org.apache.flink.connector.pulsar.source.enumerator.PulsarSourceEnumState.initialState;
 import static org.apache.flink.connector.pulsar.source.enumerator.assigner.SplitAssigner.createAssigner;
@@ -57,6 +60,7 @@ public class PulsarSourceEnumerator
     private static final Logger LOG = LoggerFactory.getLogger(PulsarSourceEnumerator.class);
 
     private final PulsarClient pulsarClient;
+    private final PulsarAdmin pulsarAdmin;
     private final PulsarSubscriber subscriber;
     private final StartCursor startCursor;
     private final RangeGenerator rangeGenerator;
@@ -93,6 +97,7 @@ public class PulsarSourceEnumerator
             PulsarSourceEnumState enumState)
             throws PulsarClientException {
         this.pulsarClient = createClient(sourceConfiguration);
+        this.pulsarAdmin = createAdmin(sourceConfiguration);
         this.subscriber = subscriber;
         this.startCursor = startCursor;
         this.rangeGenerator = rangeGenerator;
@@ -104,7 +109,7 @@ public class PulsarSourceEnumerator
 
     @Override
     public void start() {
-        subscriber.open(pulsarClient);
+        subscriber.open(pulsarClient, pulsarAdmin);
         rangeGenerator.open(sourceConfiguration);
 
         // Expose the split assignment metrics if Flink has supported.
@@ -173,6 +178,9 @@ public class PulsarSourceEnumerator
         if (pulsarClient != null) {
             pulsarClient.close();
         }
+        if (pulsarAdmin != null) {
+            pulsarAdmin.close();
+        }
     }
 
     // ----------------- private methods -------------------
@@ -220,8 +228,12 @@ public class PulsarSourceEnumerator
                     startCursor.position(partition.getTopic(), partition.getPartitionId());
 
             try {
-                position.setupSubPosition(pulsarClient, topic, subscriptionName);
-            } catch (PulsarClientException e) {
+                if (sourceConfiguration.isResetSubscriptionCursor()) {
+                    position.seekPosition(pulsarAdmin, topic, subscriptionName);
+                } else {
+                    position.createInitialPosition(pulsarAdmin, topic, subscriptionName);
+                }
+            } catch (PulsarAdminException e) {
                 throw new FlinkRuntimeException(e);
             }
         }

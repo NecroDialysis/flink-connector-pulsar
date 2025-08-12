@@ -21,13 +21,10 @@ package org.apache.flink.connector.pulsar.source.enumerator.cursor.stop;
 import org.apache.flink.connector.pulsar.source.enumerator.cursor.StopCursor;
 import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicPartition;
 
-import org.apache.pulsar.client.api.Consumer;
+import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
-import org.apache.pulsar.client.api.PulsarClient;
-import org.apache.pulsar.client.api.PulsarClientException;
-import org.apache.pulsar.client.api.schema.GenericRecord;
-import org.apache.pulsar.client.impl.schema.AutoConsumeSchema;
 
 /**
  * A stop cursor that initialize the position to the latest message id. The offsets initialization
@@ -36,8 +33,6 @@ import org.apache.pulsar.client.impl.schema.AutoConsumeSchema;
  */
 public class LatestMessageStopCursor implements StopCursor {
     private static final long serialVersionUID = 1702059838323965723L;
-
-    private static final String SUBSCRIPTION_NAME = LatestMessageStopCursor.class.getSimpleName();
 
     private MessageId messageId;
     private final boolean inclusive;
@@ -53,22 +48,10 @@ public class LatestMessageStopCursor implements StopCursor {
     }
 
     @Override
-    public void open(PulsarClient client, TopicPartition partition) throws PulsarClientException {
+    public void open(PulsarAdmin admin, TopicPartition partition) throws PulsarAdminException {
         if (messageId == null) {
-            Consumer<GenericRecord> consumer = null;
-            try {
-                consumer =
-                        client.newConsumer(new AutoConsumeSchema())
-                                .topic(partition.getFullTopicName())
-                                .subscriptionName(SUBSCRIPTION_NAME)
-                                .subscribe();
-                this.messageId = consumer.getLastMessageId();
-            } finally {
-                if (consumer != null) {
-                    consumer.unsubscribe();
-                    consumer.close();
-                }
-            }
+            String topic = partition.getFullTopicName();
+            this.messageId = admin.topics().getLastMessageId(topic);
         }
     }
 }
