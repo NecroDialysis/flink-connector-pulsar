@@ -26,7 +26,7 @@ under the License.
 	<parent>
         <groupId>com.xenoamess.flink</groupId>
 		<artifactId>flink-connector-pulsar-parent</artifactId>
-		<version>5.0-SNAPSHOT</version>
+		<version>5.0-pulsar-2.11.0-beta1</version>
 	</parent>
 
 	<artifactId>flink-connector-pulsar</artifactId>

@@ -31,7 +31,7 @@ under the License.
 
     <groupId>com.xenoamess.flink</groupId>
     <artifactId>flink-connector-pulsar-parent</artifactId>
-    <version>5.0-SNAPSHOT</version>
+    <version>5.0-pulsar-2.11.0-beta1</version>
     <name>Flink : Connectors : Pulsar : Parent</name>
     <packaging>pom</packaging>
     <inceptionYear>2022</inceptionYear>
@@ -44,6 +44,10 @@ under the License.
         </developerConnection>
     </scm>
 
+    <developers>
+        <developer></developer>
+    </developers>
+
     <modules>
         <module>flink-connector-pulsar</module>
         <module>flink-sql-connector-pulsar</module>
@@ -51,6 +55,12 @@ under the License.
     </modules>
 
     <properties>
+        <java.version>21</java.version>
+        <target.java.version>${java.version}</target.java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+
         <flink.version>2.1.0</flink.version>
         <flink-ci-tools.version>2.1.0</flink-ci-tools.version>
         <pulsar.version>2.11.0</pulsar.version>
@@ -535,10 +545,24 @@ under the License.
                 <artifactId>maven-shade-plugin</artifactId>
             </plugin>
 
-<!--            <plugin>-->
-<!--                <groupId>org.commonjava.maven.plugins</groupId>-->
-<!--                <artifactId>directory-maven-plugin</artifactId>-->
-<!--            </plugin>-->
+            <!--            <plugin>-->
+            <!--                <groupId>org.commonjava.maven.plugins</groupId>-->
+            <!--                <artifactId>directory-maven-plugin</artifactId>-->
+            <!--            </plugin>-->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.8.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <autoPublish>true</autoPublish>
+                    <waitUntil>published</waitUntil>
+                    <centralBaseUrl>https://central.sonatype.com</centralBaseUrl>
+                    <centralSnapshotsUrl>https://central.sonatype.com</centralSnapshotsUrl>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+
 </project>
