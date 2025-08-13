@@ -29,7 +29,7 @@ under the License.
         <version>1.0.0</version>
     </parent>
 
-    <groupId>com.xenoamess.flink</groupId>
+    <groupId>com.xenoamess.necrodialysis.flink-connector-pulsar</groupId>
     <artifactId>flink-connector-pulsar-parent</artifactId>
     <version>5.0.0-pulsar-2.11.0-beta1</version>
     <name>Flink : Connectors : Pulsar : Parent</name>

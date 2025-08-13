@@ -21,7 +21,7 @@ under the License.
 		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<parent>
-        <groupId>com.xenoamess.flink</groupId>
+        <groupId>com.xenoamess.necrodialysis.flink-connector-pulsar</groupId>
 		<artifactId>flink-connector-pulsar-parent</artifactId>
 		<version>5.0.0-pulsar-2.11.0-beta1</version>
 	</parent>
