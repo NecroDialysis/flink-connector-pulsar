@@ -227,6 +227,10 @@ public class PulsarSourceEnumerator
             CursorPosition position =
                     startCursor.position(partition.getTopic(), partition.getPartitionId());
 
+            if (position == null) {
+                position = new CursorPosition(Long.MAX_VALUE);
+            }
+
             try {
                 if (sourceConfiguration.isResetSubscriptionCursor()) {
                     position.seekPosition(pulsarAdmin, topic, subscriptionName);
