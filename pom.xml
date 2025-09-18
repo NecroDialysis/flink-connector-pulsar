@@ -29,12 +29,20 @@ under the License.
         <version>1.0.0</version>
     </parent>
 
-    <groupId>org.apache.flink</groupId>
+    <groupId>io.streamnative.connectors</groupId>
     <artifactId>flink-connector-pulsar-parent</artifactId>
     <version>4.2-SNAPSHOT</version>
     <name>Flink : Connectors : Pulsar : Parent</name>
     <packaging>pom</packaging>
     <inceptionYear>2022</inceptionYear>
+    <description>Flink pulsar connector</description>
+
+    <developers>
+        <developer>
+            <organization>StreamNative</organization>
+            <organizationUrl>https://streamnative.io/</organizationUrl>
+        </developer>
+    </developers>
 
     <scm>
         <url>https://github.com/apache/flink-connector-pulsar</url>
@@ -92,6 +100,11 @@ under the License.
         <!-- Pulsar container requires more memories since 2.11.0. Reduce the surefire instance. -->
         <flink.forkCountUnitTest>2</flink.forkCountUnitTest>
         <flink.forkCountITCase>2</flink.forkCountITCase>
+
+        <maven-central-plugin.version>0.7.0</maven-central-plugin.version>
+        <maven.gpg.plugin.version>3.0.1</maven.gpg.plugin.version>
+        <maven.javadoc.plugin.version>3.4.1</maven.javadoc.plugin.version>
+        <maven.source.plugin.version>3.2.1</maven.source.plugin.version>
     </properties>
 
     <dependencies>
@@ -483,9 +496,14 @@ under the License.
                 </plugin>
 
                 <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-shade-plugin</artifactId>
-                  <version>${maven-shade-plugin.version}</version>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <version>${maven-central-plugin.version}</version>
+                    <extensions>true</extensions>
+                    <configuration>
+                        <publishingServerId>central</publishingServerId>
+                        <autoPublish>true</autoPublish>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -559,9 +577,91 @@ under the License.
             </plugin>
 
             <plugin>
-                <groupId>org.commonjava.maven.plugins</groupId>
-                <artifactId>directory-maven-plugin</artifactId>
-            </plugin>
+                    <!-- Sets a 'rootDir' system property that points to the root of the project.
+                         Child projects who want to use it must set the ${flink.parent.artifactId} property -->
+                    <groupId>org.commonjava.maven.plugins</groupId>
+                    <artifactId>directory-maven-plugin</artifactId>
+                    <version>0.1</version>
+                    <executions>
+                        <execution>
+                            <id>directories</id>
+                            <goals>
+                                <goal>directory-of</goal>
+                            </goals>
+                            <phase>initialize</phase>
+                            <configuration>
+                                <property>rootDir</property>
+                                <project>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>${flink.parent.artifactId}</artifactId>
+                                </project>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven.gpg.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <phase>verify</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${maven.javadoc.plugin.version}</version>
+                        <configuration>
+                            <source>8</source>
+                            <!-- Disable module-specific options for Java 8 -->
+                            <additionalOptions>-Xdoclint:none</additionalOptions>
+                            <failOnError>false</failOnError>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>aggregate</id>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                </goals>
+                                <phase>site</phase>
+                            </execution>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${maven.source.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

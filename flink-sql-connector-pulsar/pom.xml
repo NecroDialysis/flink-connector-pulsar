@@ -24,13 +24,14 @@ under the License.
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.apache.flink</groupId>
+    <groupId>io.streamnative.connectors</groupId>
     <artifactId>flink-connector-pulsar-parent</artifactId>
     <version>4.2-SNAPSHOT</version>
   </parent>
 
   <artifactId>flink-sql-connector-pulsar</artifactId>
   <name>Flink : Connectors : Pulsar : SQL</name>
+  <description>Flink pulsar connector SQL</description>
 
   <packaging>jar</packaging>
 
@@ -40,7 +41,7 @@ under the License.
 
   <dependencies>
     <dependency>
-      <groupId>org.apache.flink</groupId>
+      <groupId>io.streamnative.connectors</groupId>
       <artifactId>flink-connector-pulsar</artifactId>
       <version>${project.version}</version>
     </dependency>
