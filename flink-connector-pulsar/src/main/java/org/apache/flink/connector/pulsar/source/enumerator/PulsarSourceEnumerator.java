@@ -219,6 +219,10 @@ public class PulsarSourceEnumerator
             CursorPosition position =
                     startCursor.position(partition.getTopic(), partition.getPartitionId());
 
+            if (position == null) {
+                position = new CursorPosition(Long.MAX_VALUE);
+            }
+
             try {
                 position.setupSubPosition(pulsarClient, topic, subscriptionName);
             } catch (PulsarClientException e) {
