@@ -23,7 +23,7 @@ under the License.
 	<parent>
         <groupId>com.xenoamess.necrodialysis.flink-connector-pulsar</groupId>
 		<artifactId>flink-connector-pulsar-parent</artifactId>
-		<version>4.2.1-pulsar-3.0.13-x1</version>
+		<version>4.2.1-pulsar-3.0.13-x2</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
